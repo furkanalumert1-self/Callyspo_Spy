@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  clerkId               String    @unique
+  email                 String    @unique
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?
+  plan                  String    @default("free") // free, starter, pro
+  searchesUsedThisMonth Int       @default(0)
+  searchQuota           Int       @default(5)
+  quotaResetAt          DateTime  @default(now())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  searches              Search[]
+}
+
+model Search {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyword     String
+  country     String         @default("US")
+  activeStatus String        @default("all")
+  status      String         @default("pending") // pending, running, completed, failed
+  maxAdsToProcess Int        @default(5)
+  adsFound    Int            @default(0)
+  adsProcessed Int           @default(0)
+  errorMessage String?       @db.Text
+  fbRunId     String?
+  createdAt   DateTime       @default(now())
+  completedAt DateTime?
+  results     ProductMatch[]
+
+  @@index([userId])
+}
+
+model ProductMatch {
+  id                  String   @id @default(cuid())
+  searchId            String
+  search              Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  fbPageName          String?
+  fbPageProfileUri    String?
+  fbAdLinkUrl         String?
+  fbAdBodyText        String?  @db.Text
+  detectedProductName String?
+  amazonUrl           String?
+  amazonTitle         String?
+  amazonPrice         Float?
+  amazonRating        Float?
+  createdAt           DateTime @default(now())
+
+  @@index([searchId])
+}
