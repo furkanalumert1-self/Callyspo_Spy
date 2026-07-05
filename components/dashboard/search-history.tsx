@@ -36,6 +36,10 @@ export function SearchHistory({ initialSearches }: { initialSearches: SearchRow[
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    setSearches(initialSearches);
+  }, [initialSearches]);
+
+  useEffect(() => {
     async function refresh() {
       const res = await fetch("/api/searches");
       if (!res.ok) return;

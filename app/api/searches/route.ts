@@ -43,7 +43,23 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await enqueueSearch(search.id);
+  try {
+    await enqueueSearch(search.id);
+  } catch (err) {
+    console.error(`Failed to enqueue search ${search.id}`, err);
+    await prisma.search.update({
+      where: { id: search.id },
+      data: {
+        status: "failed",
+        errorMessage: "Arama kuyruğa eklenemedi. Lütfen REDIS_URL yapılandırmasını kontrol edin.",
+        completedAt: new Date(),
+      },
+    });
+    return NextResponse.json(
+      { error: "Arama kuyruğa eklenemedi (Redis bağlantısı kurulamadı). Lütfen daha sonra tekrar deneyin." },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ search }, { status: 201 });
 }

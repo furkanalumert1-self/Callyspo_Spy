@@ -33,9 +33,10 @@ export function SearchForm({ onCreated }: { onCreated?: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword, country }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data.error || "Arama başlatılamadı");
+        setError(data?.error || `Arama başlatılamadı (HTTP ${res.status})`);
+        router.refresh();
         return;
       }
       setKeyword("");
